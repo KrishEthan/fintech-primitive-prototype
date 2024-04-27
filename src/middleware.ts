@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
+import { AccessTokenKey } from "./constants/strings";
 
 export function middleware(request: NextRequest) {
-  const isAuthenticated = request.cookies.get("access_token");
+  const isAuthenticated = request.cookies.get(AccessTokenKey);
   const { pathname } = request.nextUrl;
 
   if (!isAuthenticated && pathname === "/") {
