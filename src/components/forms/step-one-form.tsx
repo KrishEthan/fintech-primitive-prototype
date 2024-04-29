@@ -6,12 +6,20 @@ import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { StepperStore, useStepperStore } from "@/store/StepperStore";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
@@ -21,6 +29,7 @@ import { Calendar } from "../ui/calendar";
 import { format } from "date-fns";
 
 const FormSchema = z.object({
+  name: z.string().min(1, { message: "Name is required" }),
   pan: z
     .string()
     .min(10, { message: "Pan number should have minimum 10 characters" })
@@ -36,6 +45,18 @@ const FormSchema = z.object({
     .regex(new RegExp("^[2-9]{1}[0-9]{3}[0-9]{4}[0-9]{4}$")),
   mobile: z.string().min(1, { message: "Mobile number is required" }),
   date_of_birth: z.date(),
+  father_name: z.string().min(1, { message: "Father's name is required" }),
+  mother_name: z.string().min(1, { message: "Mother's name is required" }),
+  spouse_name: z.string().optional(),
+  gender: z.string().min(1, { message: "Gender is required" }),
+  marital_status: z.string().min(1, { message: "Marital status is required" }),
+  residential_status: z
+    .string()
+    .min(1, { message: "Residential status is required" }),
+  occupation_type: z
+    .string()
+    .min(1, { message: "Occupation type is required" }),
+  country_of_birth: z.string().optional(),
 });
 
 export default function StepOneForm() {
@@ -45,11 +66,20 @@ export default function StepOneForm() {
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
+      name: "",
       pan: "",
       email: "",
       aadhaar_number: "",
       mobile: "",
       date_of_birth: undefined,
+      father_name: "",
+      mother_name: "",
+      spouse_name: "",
+      gender: "",
+      marital_status: "",
+      residential_status: "",
+      occupation_type: "",
+      country_of_birth: "",
     },
     mode: "onChange",
     reValidateMode: "onChange",
@@ -78,6 +108,22 @@ export default function StepOneForm() {
         onSubmit={form.handleSubmit(onSubmit)}
         className="grid grid-cols-2 gap-4"
       >
+        <FormField
+          control={form.control}
+          name="name"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Name</FormLabel>
+              <FormControl>
+                <Input placeholder="Name" {...field} />
+              </FormControl>
+              {form.formState.errors.name && (
+                <FormMessage>{form.formState.errors.name.message}</FormMessage>
+              )}
+            </FormItem>
+          )}
+        />
+
         <FormField
           control={form.control}
           name="pan"
@@ -176,18 +222,217 @@ export default function StepOneForm() {
 
         <FormField
           control={form.control}
+          name="country_of_birth"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Country of Birth</FormLabel>
+              <FormControl>
+                <Select
+                  onValueChange={field.onChange}
+                  defaultValue={field.value}
+                >
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select Country" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectGroup>
+                      <SelectItem value="india">India</SelectItem>
+                      <SelectItem value="usa">USA</SelectItem>
+                      <SelectItem value="uk">UK</SelectItem>
+                      <SelectItem value="uae">UAE</SelectItem>
+                      <SelectItem value="canada">Canada</SelectItem>
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+              </FormControl>
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
           name="mobile"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Mobile</FormLabel>
               <FormControl>
-                <Input placeholder="Mobile" {...field} />
+                <Input placeholder="+91 1234567890" {...field} />
               </FormControl>
               {form.formState.errors.mobile && (
                 <FormMessage>
                   {form.formState.errors.mobile.message}
                 </FormMessage>
               )}
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="father_name"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Father Name</FormLabel>
+              <FormControl>
+                <Input placeholder="Father's Name" {...field} />
+              </FormControl>
+              {form.formState.errors.father_name && (
+                <FormMessage>
+                  {form.formState.errors.father_name.message}
+                </FormMessage>
+              )}
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="mother_name"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Mother Name</FormLabel>
+              <FormControl>
+                <Input placeholder="Mother's Name" {...field} />
+              </FormControl>
+              {form.formState.errors.mother_name && (
+                <FormMessage>
+                  {form.formState.errors.mother_name.message}
+                </FormMessage>
+              )}
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="spouse_name"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Spouse Name</FormLabel>
+              <FormControl>
+                <Input placeholder="Spouse's Name (optional)" {...field} />
+              </FormControl>
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="gender"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Gender</FormLabel>
+              <FormControl>
+                <Select
+                  onValueChange={field.onChange}
+                  defaultValue={field.value}
+                >
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select Gender" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="male">Male</SelectItem>
+                    <SelectItem value="female">Female</SelectItem>
+                    <SelectItem value="transgender">Transgender</SelectItem>
+                  </SelectContent>
+                </Select>
+              </FormControl>
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="marital_status"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Marital Status</FormLabel>
+              <FormControl>
+                <Select
+                  onValueChange={field.onChange}
+                  defaultValue={field.value}
+                >
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select Marital Status" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="married">Married</SelectItem>
+                    <SelectItem value="unmarried">Un-Married</SelectItem>
+                    <SelectItem value="others">Others</SelectItem>
+                  </SelectContent>
+                </Select>
+              </FormControl>
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="residential_status"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Residential Status</FormLabel>
+              <FormControl>
+                <Select
+                  onValueChange={field.onChange}
+                  defaultValue={field.value}
+                >
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select Residential Status" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="resident_individual">
+                      Resident Individual
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </FormControl>
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="occupation_type"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Occupation Type</FormLabel>
+              <FormControl>
+                <Select
+                  onValueChange={field.onChange}
+                  defaultValue={field.value}
+                >
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select Occupation Type" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="business">Business</SelectItem>
+                    <SelectItem value="professional">Professional</SelectItem>
+                    <SelectItem value="self_employed">Self Employed</SelectItem>
+                    <SelectItem value="retired">Retired</SelectItem>
+                    <SelectItem value="housewife">Housewife</SelectItem>
+                    <SelectItem value="student">Student</SelectItem>
+                    <SelectItem value="public_sector">Public Sector</SelectItem>
+                    <SelectItem value="private_sector">
+                      Private Sector
+                    </SelectItem>
+                    <SelectItem value="government_sector">
+                      Government Sector
+                    </SelectItem>
+                    <SelectItem value="other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
+              </FormControl>
             </FormItem>
           )}
         />
