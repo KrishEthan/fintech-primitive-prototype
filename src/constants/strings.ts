@@ -1,4 +1,4 @@
-export const FintechPrimitiveUrl = process.env.NEXT_PUBLIC_FINTECH_PRIMITIVE_TEST_URL!;
+export const FintechPrimitiveUrl = process.env.NEXT_PUBLIC_FINTECH_PRIMITIVE_URL!;
 export const FintechPrimitiveUrlV2= process.env.NEXT_PUBLIC_FINTECH_PRIMITIVE_V2_TEST_URL!;
 export const ClientId = process.env.NEXT_PUBLIC_FINTECH_PRIMITIVE_CLIENT_ID!;
 export const ClientSecret = process.env.NEXT_PUBLIC_FINTECH_PRIMITIVE_CLIENT_SECRET!;

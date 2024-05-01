@@ -92,6 +92,8 @@ export function postKycFetcher(baseURL: string) {
     options?: Readonly<{ arg: ExtraArgs }>
   ) => {
     const isArray = Array.isArray(key);
+    console.log(key);
+    console.log(options?.arg);
     return fetcher({
       url: baseURL + (isArray ? key[0] : key),
       init: {
@@ -106,6 +108,26 @@ export function postKycFetcher(baseURL: string) {
     });
   };
 }
+
+export function postFormFetcher(baseURL: string) {
+  return <ExtraArgs>(key: string, options?: Readonly<{ arg: ExtraArgs }>) => {
+    const formData = new FormData();
+    Object.entries(options?.arg as Record<string, string | File>).forEach(
+      ([_key, value]) => {
+        formData.append(_key, value);
+      }
+    );
+    return fetcher({
+      url: baseURL + key,
+      init: {
+        method: "POST",
+        body: formData,
+      },
+      error: "An error occurred while posting the data.",
+    });
+  };
+}
+
 
 export function patchKycFetcher(baseURL: string) {
   return <ExtraArgs>(key: string, options?: Readonly<{ arg: ExtraArgs }>) =>

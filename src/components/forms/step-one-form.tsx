@@ -1,3 +1,4 @@
+"use client";
 import { useEffect, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -27,17 +28,18 @@ import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { cn } from "@/lib/utils";
 import { CalendarIcon } from "@radix-ui/react-icons";
 import { Calendar } from "../ui/calendar";
-import { format } from "date-fns";
 import dayjs from "dayjs";
 import { useKycRequestMutation } from "@/hooks/useMutations";
 import { ReloadIcon } from "@radix-ui/react-icons";
 import { useCookies } from "react-cookie";
+import useSearchParams from "@/lib/useSearchParams";
 
 interface IStepperStoreResponse {
   id: string;
 }
 
 function useKycRequest() {
+  const { updateSearchParams } = useSearchParams();
   const [{ kyc_id, current_step_id }, setCookie] = useCookies([
     "kyc_id",
     "current_step_id",
@@ -48,11 +50,9 @@ function useKycRequest() {
   >(`/kyc_requests`, {
     onSuccess(data) {
       const { id } = data;
+      updateSearchParams({ step: 2 });
       setCookie("kyc_id", id);
       setCookie("current_step_id", 2);
-    },
-    onError(error) {
-      console.error(error);
     },
   });
   return { trigger, isMutating };
@@ -214,7 +214,7 @@ export default function StepOneForm() {
                       )}
                     >
                       {field.value ? (
-                        format(field.value, "yyyy-MM-dd")
+                        dayjs(field.value).format("YYYY-MM-DD")
                       ) : (
                         <span>Pick a date</span>
                       )}
@@ -226,7 +226,7 @@ export default function StepOneForm() {
                   <Calendar
                     initialFocus
                     mode="single"
-                    captionLayout="dropdown-buttons" //Also: dropdown | buttons
+                    captionLayout="dropdown-buttons"
                     fromYear={1980}
                     toYear={2024}
                     selected={date}

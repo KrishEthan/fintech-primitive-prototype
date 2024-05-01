@@ -13,49 +13,66 @@ import {
 } from "@/components/ui/form";
 import { Button } from "../ui/button";
 import { Cookies } from "react-cookie";
-import { AccessTokenKey } from "@/constants/strings";
+import { ReloadIcon } from "@radix-ui/react-icons";
+import { StepFourFormSchema } from "./schema/step-four-form-schema";
+import useSearchParams from "@/lib/useSearchParams";
+import { useKycRequestPatchMutation } from "@/hooks/useMutations";
+import { useUploadFile } from "@/hooks/useUploadFile";
 
-const MAX_UPLOAD_SIZE = 1024 * 1024 * 10;
-const ACCEPTED_FILE_TYPES = ["image/png", "image/jpeg", "image/jpg"];
+const URLs = {
+  patch: "/kyc_requests/{kyc_id}",
+};
 
-const FormSchema = z.object({
-  proof: z
-    .instanceof(File)
-    .optional()
-    .refine((file) => {
-      return !file || file.size <= MAX_UPLOAD_SIZE;
-    }, "File size must be less than 3MB")
-    .refine((file) => {
-      if (!file) return true;
-      return ACCEPTED_FILE_TYPES.includes(file.type);
-    }, "File must be a PNG"),
-});
+const useKycPatchRequest = () => {
+  const { updateSearchParams } = useSearchParams();
+  const kyc_id = new Cookies().get("kyc_id");
+  const url = URLs.patch.replace("{kyc_id}", kyc_id);
+  const { trigger, isMutating } = useKycRequestPatchMutation(url, {
+    onSuccess() {
+      updateSearchParams({ step: 3 });
+    },
+  });
+  return { trigger, isMutating };
+};
 
 export default function StepFourForm() {
-  const form = useForm<z.infer<typeof FormSchema>>({
-    resolver: zodResolver(FormSchema),
+  const { fileTrigger, isFileMutating } = useUploadFile();
+  const { trigger, isMutating } = useKycPatchRequest();
+  const form = useForm<z.infer<typeof StepFourFormSchema>>({
+    resolver: zodResolver(StepFourFormSchema),
     defaultValues: {
-      proof: undefined,
+      identity_proof: undefined,
+      signature: undefined,
+      photo: undefined,
+      ipv_video: undefined,
     },
     mode: "onChange",
     reValidateMode: "onChange",
   });
 
-  async function onSubmit(data: z.infer<typeof FormSchema>) {
+  async function onSubmit(data: z.infer<typeof StepFourFormSchema>) {
     try {
-      const formData = new FormData();
-      formData.append("file", data.proof as File);
-      const accessToken = new Cookies().get(AccessTokenKey);
-      const response = await fetch("https://s.finprim.com/files", {
-        method: "POST",
-        headers: {
-          "x-tenant-id": "ethanai",
-          Authorization: `Bearer ${accessToken}`,
-        },
-        body: formData,
+      const response_1 = await fileTrigger({
+        file: data.identity_proof,
       });
-      const responseData = await response.json();
-      console.log("File uploaded successfully:", responseData);
+      const response_2 = await fileTrigger({
+        file: data.signature,
+      });
+      const response_3 = await fileTrigger({
+        file: data.photo,
+      });
+      const response_4 = await fileTrigger({
+        file: data.ipv_video,
+      });
+      const payload = {
+        identity_proof: response_1?.id,
+        signature: response_2?.id,
+        photo: response_3?.id,
+        ipv_video: response_4?.id,
+      };
+
+      await trigger(payload);
+      console.log("File uploaded successfully:", data);
     } catch (error) {
       console.error("File upload failed:", error);
     }
@@ -69,10 +86,10 @@ export default function StepFourForm() {
       >
         <FormField
           control={form.control}
-          name="proof"
+          name="identity_proof"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Proof</FormLabel>
+              <FormLabel>Identity Proof</FormLabel>
               <FormControl>
                 <Input
                   type="file"
@@ -83,11 +100,88 @@ export default function StepFourForm() {
                   }}
                 />
               </FormControl>
-              <FormMessage>{form.formState.errors.proof?.message}</FormMessage>
+              <FormMessage>
+                {form.formState.errors.identity_proof?.message}
+              </FormMessage>
             </FormItem>
           )}
         />
-        <Button type="submit">Submit</Button>
+
+        <FormField
+          control={form.control}
+          name="signature"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Signature</FormLabel>
+              <FormControl>
+                <Input
+                  type="file"
+                  accept={"image/png, image/jpeg, image/jpg"}
+                  onChange={(event) => {
+                    const file = event.target.files?.[0];
+                    field.onChange(file);
+                  }}
+                />
+              </FormControl>
+              <FormMessage>
+                {form.formState.errors.signature?.message}
+              </FormMessage>
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="photo"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Photo</FormLabel>
+              <FormControl>
+                <Input
+                  type="file"
+                  accept={"image/png, image/jpeg, image/jpg"}
+                  onChange={(event) => {
+                    const file = event.target.files?.[0];
+                    field.onChange(file);
+                  }}
+                />
+              </FormControl>
+              <FormMessage>{form.formState.errors.photo?.message}</FormMessage>
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="ipv_video"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Photo</FormLabel>
+              <FormControl>
+                <Input
+                  type="file"
+                  accept={"video/mp4, video/webm"}
+                  onChange={(event) => {
+                    const file = event.target.files?.[0];
+                    field.onChange(file);
+                  }}
+                />
+              </FormControl>
+              <FormMessage>{form.formState.errors.photo?.message}</FormMessage>
+            </FormItem>
+          )}
+        />
+
+        <Button
+          type="submit"
+          className="row-span-2"
+          disabled={isFileMutating || isMutating}
+        >
+          {(isFileMutating || isMutating) && (
+            <ReloadIcon className="mr-2 h-4 w-4 animate-spin" />
+          )}
+          Submit
+        </Button>
       </form>
     </Form>
   );

@@ -14,6 +14,7 @@ import {
 import { cn } from "@/lib/utils";
 import { CalendarIcon } from "@radix-ui/react-icons";
 import { Calendar } from "../ui/calendar";
+import { ReloadIcon } from "@radix-ui/react-icons";
 import { format } from "date-fns";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 
@@ -27,23 +28,37 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "../ui/button";
+import { StepThreeFormSchema } from "./schema/step-three-form.schema";
+import dayjs from "dayjs";
+import { useUploadFile } from "@/hooks/useUploadFile";
+import { Cookies, useCookies } from "react-cookie";
+import { useKycRequestPatchMutation } from "@/hooks/useMutations";
+import useSearchParams from "@/lib/useSearchParams";
 
-const FormSchema = z.object({
-  line_1: z.string(),
-  line_2: z.string(),
-  line_3: z.string(),
-  city: z.string(),
-  pincode: z.string(),
-  proof_type: z.string(),
-  proof_number: z.string(),
-  proof_issue_date: z.string(),
-  proof_expiry_date: z.string(),
-});
+const URLs = {
+  patch: "/kyc_requests/{kyc_id}",
+};
+
+const useKycPatchRequest = () => {
+  const { updateSearchParams } = useSearchParams();
+  const kyc_id = new Cookies().get("kyc_id");
+  const [{ current_step_id }, setCookie] = useCookies(["current_step_id"]);
+  const url = URLs.patch.replace("{kyc_id}", kyc_id);
+  const { trigger, isMutating } = useKycRequestPatchMutation(url, {
+    onSuccess() {
+      updateSearchParams({ step: 4 });
+      setCookie("current_step_id", 4);
+    },
+  });
+  return { trigger, isMutating };
+};
 
 export default function StepThreeForm() {
+  const { fileTrigger, isFileMutating } = useUploadFile();
+  const { trigger, isMutating } = useKycPatchRequest();
   const [date, setDate] = useState<Date | undefined>(new Date());
-  const form = useForm<z.infer<typeof FormSchema>>({
-    resolver: zodResolver(FormSchema),
+  const form = useForm<z.infer<typeof StepThreeFormSchema>>({
+    resolver: zodResolver(StepThreeFormSchema),
     defaultValues: {
       line_1: "",
       line_2: "",
@@ -51,12 +66,54 @@ export default function StepThreeForm() {
       city: "",
       pincode: "",
       proof_type: "",
+      proof_front: undefined,
+      proof_back: undefined,
       proof_number: "",
-      proof_issue_date: "",
-      proof_expiry_date: "",
+      proof_issue_date: undefined,
+      proof_expiry_date: undefined,
     },
   });
-  async function onSubmit(data: z.infer<typeof FormSchema>) {}
+  async function onSubmit(data: z.infer<typeof StepThreeFormSchema>) {
+    try {
+      const file_response_1 = await fileTrigger({
+        file: data.proof_front,
+      });
+      const file_response_2 = await fileTrigger({
+        file: data.proof_back,
+      });
+
+      const file_front_id_1 = file_response_1?.id;
+      const file_back_id_2 = file_response_2?.id;
+
+      const proof_issue_date = dayjs(data.proof_issue_date).format(
+        "YYYY-MM-DD"
+      );
+      const proof_expiry_date = dayjs(data.proof_expiry_date).format(
+        "YYYY-MM-DD"
+      );
+      const payload = {
+        line_1: data.line_1,
+        line_2: data.line_2,
+        line_3: data.line_3,
+        city: data.city,
+        pincode: data.pincode,
+        country: "in",
+        proof_type: data.proof_type,
+        proof_number: data.proof_number,
+        proof_issue_date,
+        proof_expiry_date,
+        proof: file_front_id_1,
+        proof_back: file_back_id_2,
+      };
+      await trigger({
+        address: {
+          ...payload,
+        }
+      });
+    } catch (error) {
+      console.error(error);
+    }
+  }
 
   return (
     <Form {...form}>
@@ -204,6 +261,52 @@ export default function StepThreeForm() {
 
         <FormField
           control={form.control}
+          name="proof_front"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Proof Front</FormLabel>
+              <FormControl>
+                <Input
+                  type="file"
+                  accept={"image/png, image/jpeg, image/jpg"}
+                  onChange={(event) => {
+                    const file = event.target.files?.[0];
+                    field.onChange(file);
+                  }}
+                />
+              </FormControl>
+              <FormMessage>
+                {form.formState.errors.proof_front?.message}
+              </FormMessage>
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="proof_back"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Proof Back</FormLabel>
+              <FormControl>
+                <Input
+                  type="file"
+                  accept={"image/png, image/jpeg, image/jpg"}
+                  onChange={(event) => {
+                    const file = event.target.files?.[0];
+                    field.onChange(file);
+                  }}
+                />
+              </FormControl>
+              <FormMessage>
+                {form.formState.errors.proof_front?.message}
+              </FormMessage>
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
           name="proof_issue_date"
           render={({ field }) => (
             <FormItem className="flex flex-col">
@@ -293,6 +396,12 @@ export default function StepThreeForm() {
             </FormItem>
           )}
         />
+        <Button className="col-span-2" disabled={isFileMutating || isMutating}>
+          {(isFileMutating || isMutating) && (
+            <ReloadIcon className="mr-2 h-4 w-4 animate-spin" />
+          )}
+          Submit
+        </Button>
       </form>
     </Form>
   );

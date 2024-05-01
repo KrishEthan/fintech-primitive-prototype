@@ -1,3 +1,5 @@
+"use client";
+
 import React from "react";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -11,29 +13,37 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { useKycRequestPatchMutation } from "@/hooks/useMutations";
+import { Button } from "@/components/ui/button";
+import { ReloadIcon } from "@radix-ui/react-icons";
+import { StepTwoFormSchema } from "./schema/step-two-form-schema";
+import { Cookies, useCookies } from "react-cookie";
+import useSearchParams from "@/lib/useSearchParams";
+import { useUploadFile } from "@/hooks/useUploadFile";
 
-const MAX_UPLOAD_SIZE = 1024 * 1024 * 10;
-const ACCEPTED_FILE_TYPES = ["image/png", "image/jpeg", "image/jpg"];
-
-const FormSchema = z.object({
-  account_holder_name: z.string(),
-  account_number: z.string(),
-  ifsc_code: z.string(),
-  proof: z
-    .instanceof(File)
-    .optional()
-    .refine((file) => {
-      return !file || file.size <= MAX_UPLOAD_SIZE;
-    }, "File size must be less than 3MB")
-    .refine((file) => {
-      if (!file) return true;
-      return ACCEPTED_FILE_TYPES.includes(file.type);
-    }, "File must be a PNG"),
-});
+const URLs = {
+  patch: "/kyc_requests/{kyc_id}",
+};
+const useKycPatchRequest = () => {
+  const { updateSearchParams } = useSearchParams();
+  const kyc_id = new Cookies().get("kyc_id");
+  const [{ current_step_id }, setCookie] = useCookies(["current_step_id"]);
+  const url = URLs.patch.replace("{kyc_id}", kyc_id);
+  const { trigger, isMutating } = useKycRequestPatchMutation(url, {
+    onSuccess() {
+      updateSearchParams({ step: 3 });
+      setCookie("current_step_id", 3);
+    },
+  });
+  return { trigger, isMutating };
+};
 
 export default function StepTwoForm() {
-  const form = useForm<z.infer<typeof FormSchema>>({
-    resolver: zodResolver(FormSchema),
+  const { trigger, isMutating } = useKycPatchRequest();
+  const { fileData, fileTrigger, isFileMutating } = useUploadFile();
+
+  const form = useForm<z.infer<typeof StepTwoFormSchema>>({
+    resolver: zodResolver(StepTwoFormSchema),
     defaultValues: {
       account_holder_name: "",
       account_number: "",
@@ -44,9 +54,22 @@ export default function StepTwoForm() {
     reValidateMode: "onChange",
   });
 
-  async function onSubmit(data: z.infer<typeof FormSchema>) {
+  async function onSubmit(data: z.infer<typeof StepTwoFormSchema>) {
     try {
-      console.log("Data:", data);
+      await fileTrigger({
+        file: data.proof,
+      });
+
+      const payload = {
+        bank_account: {
+          account_holder_name: data.account_holder_name,
+          account_number: data.account_number,
+          ifsc_code: data.ifsc_code,
+          proof: fileData?.id,
+        },
+      };
+
+      await trigger(payload);
     } catch (error) {
       console.error("File upload failed:", error);
     }
@@ -124,6 +147,16 @@ export default function StepTwoForm() {
             </FormItem>
           )}
         />
+        <Button
+          className="col-span-2"
+          type="submit"
+          disabled={isFileMutating || isMutating}
+        >
+          {(isFileMutating || isMutating) && (
+            <ReloadIcon className="mr-2 h-4 w-4 animate-spin" />
+          )}
+          Submit
+        </Button>
       </form>
     </Form>
   );

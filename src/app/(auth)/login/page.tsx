@@ -8,7 +8,7 @@ import {
   CardHeader,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { useCookies } from "react-cookie";
+import { Cookies, useCookies } from "react-cookie";
 import React, { useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { ReloadIcon } from "@radix-ui/react-icons";
@@ -26,6 +26,8 @@ interface IAuthResponse {
 function useAuth({ tenant }: { tenant: string }) {
   const { replace } = useRouter();
   const { toast } = useToast();
+  const currentStepId = new Cookies().get("current_step_id");
+
   const [{ access_token }, setCookie] = useCookies(["access_token", "tenant"]);
   const { trigger, isMutating } = useAuthServerMutation<unknown, IAuthResponse>(
     `/auth/${tenant}/token`,
@@ -41,7 +43,7 @@ function useAuth({ tenant }: { tenant: string }) {
           title: "Login Successful",
           description: "You have 30min session",
         });
-        replace("/");
+        replace(`/?step=${currentStepId}`);
       },
       onError(error) {
         toast({
