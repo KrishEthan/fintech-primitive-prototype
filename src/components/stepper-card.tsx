@@ -2,7 +2,6 @@
 import React, { useState } from "react";
 import { Card, CardContent, CardFooter, CardHeader } from "./ui/card";
 import { Button } from "./ui/button";
-import { Input } from "./ui/input";
 import StepOneForm from "./forms/step-one-form";
 import StepTwoForm from "./forms/step-two-form";
 import StepThreeForm from "./forms/step-three-form";

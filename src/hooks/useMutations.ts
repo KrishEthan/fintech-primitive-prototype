@@ -1,6 +1,6 @@
 "use client";
 
-import { FintechPrimitiveUrl } from "@/constants/strings";
+import { FintechPrimitiveUrl, FintechPrimitiveUrlV2 } from "@/constants/strings";
 import { postAuthFetcher } from "@/lib/fetcher";
 import useSWRMutation, { SWRMutationConfiguration } from "swr/mutation";
 
@@ -24,7 +24,7 @@ export function useAuthServerMutation<ExtraArgs, Data>(
 ) {
   return useMutation<ExtraArgs, Data>(
     key,
-    postAuthFetcher(FintechPrimitiveUrl),
+    postAuthFetcher(FintechPrimitiveUrlV2),
     config
   );
 }

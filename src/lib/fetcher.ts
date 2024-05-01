@@ -100,16 +100,3 @@ async function fetchKyc() {
   const data = await response.json();
   return data;
 }
-
-// async function fetchAuth({ tenant }: { tenant: string }) {
-//   const response = await fetch(`${BASE_URL}/auth/${tenant}/token`, {
-//     method: "POST",
-//     headers: {
-//       accept: "application/json",
-//       "content-type": "application/x-www-form-urlencoded",
-//     },
-//     body,
-//   });
-//   const data = (await response.json()) as IAuthResponse;
-//   return data;
-// }
