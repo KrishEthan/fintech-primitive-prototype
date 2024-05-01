@@ -1,7 +1,14 @@
 "use client";
 
-import { FintechPrimitiveUrl, FintechPrimitiveUrlV2 } from "@/constants/strings";
-import { postAuthFetcher } from "@/lib/fetcher";
+import {
+  FintechPrimitiveUrl,
+  FintechPrimitiveUrlV2,
+} from "@/constants/strings";
+import {
+  patchKycFetcher,
+  postAuthFetcher,
+  postKycFetcher,
+} from "@/lib/fetcher";
 import useSWRMutation, { SWRMutationConfiguration } from "swr/mutation";
 
 export default function useMutation<ExtraArgs, Data>(
@@ -25,6 +32,27 @@ export function useAuthServerMutation<ExtraArgs, Data>(
   return useMutation<ExtraArgs, Data>(
     key,
     postAuthFetcher(FintechPrimitiveUrlV2),
+    config
+  );
+}
+
+export function useKycRequestMutation<ExtraArgs, Data>(
+  key: string,
+  config?: SWRMutationConfiguration<Data, Error, string, ExtraArgs>
+) {
+  return useMutation<ExtraArgs, Data>(
+    key,
+    postKycFetcher(FintechPrimitiveUrlV2),
+    config
+  );
+}
+export function useKycRequestPatchMutation<Data>(
+  key: string,
+  config?: SWRMutationConfiguration<Data, Error, string>
+) {
+  return useMutation<unknown, Data>(
+    key,
+    patchKycFetcher(FintechPrimitiveUrlV2),
     config
   );
 }

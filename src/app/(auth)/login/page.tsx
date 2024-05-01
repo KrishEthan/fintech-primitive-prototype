@@ -26,7 +26,7 @@ interface IAuthResponse {
 function useAuth({ tenant }: { tenant: string }) {
   const { replace } = useRouter();
   const { toast } = useToast();
-  const [{ access_token }, setCookie] = useCookies(["access_token"]);
+  const [{ access_token }, setCookie] = useCookies(["access_token", "tenant"]);
   const { trigger, isMutating } = useAuthServerMutation<unknown, IAuthResponse>(
     `/auth/${tenant}/token`,
     {
@@ -35,6 +35,7 @@ function useAuth({ tenant }: { tenant: string }) {
           setCookie("access_token", data.access_token, {
             expires: new Date(Date.now() + data.expires_in * 1000),
           });
+          setCookie("tenant", tenant);
         }
         toast({
           title: "Login Successful",

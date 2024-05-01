@@ -6,6 +6,7 @@ import {
   ClientSecret,
   FintechPrimitiveUrl,
   GrantType,
+  TenantKey,
 } from "@/constants/strings";
 import { Cookies } from "react-cookie";
 
@@ -84,19 +85,39 @@ export function postAuthFetcher(baseURL: string) {
   };
 }
 
-async function fetchKyc() {
-  const payload = {};
-  const access_token = new Cookies().get(AccessTokenKey);
-  const response = await fetch(`${FintechPrimitiveUrl}/kyc_requests`, {
-    method: "POST",
-    headers: {
-      accept: "application/json",
-      "x-tenant-id": "ethanai",
-      "content-type": "application/json",
-      Authorization: `Bearer ${access_token}`,
-    },
-    body: JSON.stringify(payload),
-  });
-  const data = await response.json();
-  return data;
+export function postKycFetcher(baseURL: string) {
+  const tenant = new Cookies().get(TenantKey);
+  return <ExtraArgs>(
+    key: string | [string, Record<string, string>],
+    options?: Readonly<{ arg: ExtraArgs }>
+  ) => {
+    const isArray = Array.isArray(key);
+    return fetcher({
+      url: baseURL + (isArray ? key[0] : key),
+      init: {
+        method: "POST",
+        headers: {
+          "x-tenant-id": tenant,
+          "content-type": "application/json",
+        },
+        body: formatBody(options?.arg, isArray ? key[1] : undefined),
+      },
+      error: "An error occurred while posting the data.",
+    });
+  };
+}
+
+export function patchKycFetcher(baseURL: string) {
+  return <ExtraArgs>(key: string, options?: Readonly<{ arg: ExtraArgs }>) =>
+    fetcher({
+      url: baseURL + key,
+      init: {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: options ? JSON.stringify(options.arg) : undefined,
+      },
+      error: "An error occurred while modifying the data.",
+    });
 }

@@ -1,9 +1,5 @@
+import { IGeolocation, IMobile } from "@/types";
 import { create } from "zustand";
-
-export interface IMobile {
-  isd: string;
-  number: string;
-}
 
 export interface StepperStore {
   pan: string;
@@ -20,6 +16,7 @@ export interface StepperStore {
   residential_status: string;
   occupation_type: string;
   country_of_birth: string;
+  geolocation: IGeolocation;
   setStepperStore: (data: StepperStore) => void;
 }
 
@@ -41,5 +38,9 @@ export const useStepperStore = create<StepperStore>((set) => ({
   residential_status: "",
   occupation_type: "",
   country_of_birth: "",
+  geolocation: {
+    latitude: 0,
+    longitude: 0,
+  },
   setStepperStore: (data: StepperStore) => set(data),
 }));

@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
+import { StepOneFormSchema } from "./schema/step-one-form-schema";
 import {
   Form,
   FormControl,
@@ -16,55 +17,67 @@ import {
   SelectContent,
   SelectGroup,
   SelectItem,
-  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { StepperStore, useStepperStore } from "@/store/StepperStore";
+import { IGeolocation } from "@/types";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { cn } from "@/lib/utils";
 import { CalendarIcon } from "@radix-ui/react-icons";
 import { Calendar } from "../ui/calendar";
 import { format } from "date-fns";
+import dayjs from "dayjs";
+import { useKycRequestMutation } from "@/hooks/useMutations";
+import { ReloadIcon } from "@radix-ui/react-icons";
+import { useCookies } from "react-cookie";
 
-const FormSchema = z.object({
-  name: z.string().min(1, { message: "Name is required" }),
-  pan: z
-    .string()
-    .min(10, { message: "Pan number should have minimum 10 characters" })
-    .max(10, { message: "Pan number should be 10 characters" })
-    .regex(new RegExp("[A-Z]{5}[0-9]{4}[A-Z]{1}"), {
-      message: "Invalid Pan number",
-    }),
-  email: z.string().email({ message: "Invalid email" }),
-  aadhaar_number: z
-    .string()
-    .min(12, { message: "Aadhaar number should have minimum 12 characters" })
-    .max(12, { message: "Aadhaar number should be 12 characters" })
-    .regex(new RegExp("^[2-9]{1}[0-9]{3}[0-9]{4}[0-9]{4}$")),
-  mobile: z.string().min(1, { message: "Mobile number is required" }),
-  date_of_birth: z.date(),
-  father_name: z.string().min(1, { message: "Father's name is required" }),
-  mother_name: z.string().min(1, { message: "Mother's name is required" }),
-  spouse_name: z.string().optional(),
-  gender: z.string().min(1, { message: "Gender is required" }),
-  marital_status: z.string().min(1, { message: "Marital status is required" }),
-  residential_status: z
-    .string()
-    .min(1, { message: "Residential status is required" }),
-  occupation_type: z
-    .string()
-    .min(1, { message: "Occupation type is required" }),
-  country_of_birth: z.string().optional(),
-});
+interface IStepperStoreResponse {
+  id: string;
+}
+
+function useKycRequest() {
+  const [{ kyc_id, current_step_id }, setCookie] = useCookies([
+    "kyc_id",
+    "current_step_id",
+  ]);
+  const { trigger, isMutating } = useKycRequestMutation<
+    StepperStore,
+    IStepperStoreResponse
+  >(`/kyc_requests`, {
+    onSuccess(data) {
+      const { id } = data;
+      setCookie("kyc_id", id);
+      setCookie("current_step_id", 2);
+    },
+    onError(error) {
+      console.error(error);
+    },
+  });
+  return { trigger, isMutating };
+}
 
 export default function StepOneForm() {
+  const [geolocation, setGeolocation] = useState<IGeolocation>({
+    latitude: 0,
+    longitude: 0,
+  });
   const [date, setDate] = useState<Date | undefined>(new Date());
   const { setStepperStore } = useStepperStore();
+  const { trigger, isMutating } = useKycRequest();
 
-  const form = useForm<z.infer<typeof FormSchema>>({
-    resolver: zodResolver(FormSchema),
+  useEffect(() => {
+    navigator.geolocation.getCurrentPosition((position) => {
+      setGeolocation({
+        latitude: position.coords.latitude,
+        longitude: position.coords.longitude,
+      });
+    });
+  }, []);
+
+  const form = useForm<z.infer<typeof StepOneFormSchema>>({
+    resolver: zodResolver(StepOneFormSchema),
     defaultValues: {
       name: "",
       pan: "",
@@ -85,18 +98,25 @@ export default function StepOneForm() {
     reValidateMode: "onChange",
   });
 
-  async function onSubmit(data: z.infer<typeof FormSchema>) {
+  async function onSubmit(data: z.infer<typeof StepOneFormSchema>) {
     try {
+      const isd = data.mobile.split(" ")[0];
+      const number = data.mobile.split(" ")[1];
+      const date_of_birth = dayjs(data.date_of_birth).format("YYYY-MM-DD");
       const payload = {
         ...data,
         mobile: {
-          isd: "+91",
-          number: data.mobile,
+          isd,
+          number,
         },
-        date_of_birth: data.date_of_birth.toISOString(),
+        geolocation: {
+          latitude: geolocation.latitude,
+          longitude: geolocation.longitude,
+        },
+        date_of_birth,
       } as StepperStore;
+      trigger(payload);
       setStepperStore(payload);
-      // Make the API Call to fintech premitive kyc request endpoint
     } catch (error) {
       console.error(error);
     }
@@ -163,7 +183,10 @@ export default function StepOneForm() {
             <FormItem>
               <FormLabel>Aadhaar Number</FormLabel>
               <FormControl>
-                <Input placeholder="Aadhaar Number" {...field} />
+                <Input
+                  placeholder="Last 4 digit of aadhaar number"
+                  {...field}
+                />
               </FormControl>
               {form.formState.errors.aadhaar_number && (
                 <FormMessage>
@@ -436,6 +459,10 @@ export default function StepOneForm() {
             </FormItem>
           )}
         />
+        <Button className="col-span-2" type="submit" disabled={isMutating}>
+          {isMutating && <ReloadIcon className="mr-2 h-4 w-4 animate-spin" />}
+          Submit
+        </Button>
       </form>
     </Form>
   );
