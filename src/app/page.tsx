@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, Suspense } from "react";
 import Sidebar from "@/components/sidebar";
 import StepperCard from "@/components/stepper-card";
 import { Step } from "@/types";
@@ -15,11 +15,15 @@ export default function Home() {
     setActiveStep(item);
   };
   return (
-    <DayPickerProvider initialProps={{}}>
-      <div className="h-screen w-screen flex">
-        <Sidebar onSidebarItemClick={onSidebarItemClick} />
-        <div className="flex-1 p-8 bg-gray-100">{stepsLookup[activeStep]}</div>
-      </div>
-    </DayPickerProvider>
+    <Suspense fallback={<h1>Loading...</h1>}>
+      <DayPickerProvider initialProps={{}}>
+        <div className="h-screen w-screen flex">
+          <Sidebar onSidebarItemClick={onSidebarItemClick} />
+          <div className="flex-1 p-8 bg-gray-100">
+            {stepsLookup[activeStep]}
+          </div>
+        </div>
+      </DayPickerProvider>
+    </Suspense>
   );
 }
