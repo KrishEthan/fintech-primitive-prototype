@@ -45,8 +45,6 @@ const useKycPatchRequest = () => {
 
           return;
         }
-        updateSearchParams({ step: undefined });
-        new Cookies().remove(CurrentStepId);
       },
     }
   );

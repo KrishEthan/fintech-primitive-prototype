@@ -5,6 +5,8 @@ import { useKycRequestMutation } from "@/hooks/useMutations";
 import { Cookies } from "react-cookie";
 import { IKycRequestError } from "@/types";
 import { useToast } from "../ui/use-toast";
+import { CurrentStepId, KycIdKey } from "@/constants/strings";
+import useSearchParams from "@/lib/useSearchParams";
 
 const postback_url = "http://localhost:3000/?step=1";
 
@@ -25,6 +27,7 @@ interface IEsignResponse {
 
 const useKycPostBackURL = () => {
   const { toast } = useToast();
+  const { updateSearchParams } = useSearchParams();
   const { data, trigger, isMutating } = useKycRequestMutation<
     IEsignRequest,
     IEsignResponse
@@ -39,6 +42,10 @@ const useKycPostBackURL = () => {
         });
         return;
       }
+      new Cookies().remove(KycIdKey);
+      new Cookies().remove(CurrentStepId);
+      updateSearchParams({ step: undefined });
+      new Cookies().remove(CurrentStepId);
     },
   });
   return { data, trigger, isMutating };
