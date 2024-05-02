@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { StepperStore, useStepperStore } from "@/store/StepperStore";
-import { IGeolocation } from "@/types";
+import { IGeolocation, IKycRequest, IKycResponse } from "@/types";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { cn } from "@/lib/utils";
 import { CalendarIcon } from "@radix-ui/react-icons";
@@ -33,26 +33,34 @@ import { useKycRequestMutation } from "@/hooks/useMutations";
 import { ReloadIcon } from "@radix-ui/react-icons";
 import { useCookies } from "react-cookie";
 import useSearchParams from "@/lib/useSearchParams";
-
-interface IStepperStoreResponse {
-  id: string;
-}
+import { CurrentStepId, KycIdKey } from "@/constants/strings";
+import { useToast } from "../ui/use-toast";
 
 function useKycRequest() {
+  const { toast } = useToast();
   const { updateSearchParams } = useSearchParams();
   const [{ kyc_id, current_step_id }, setCookie] = useCookies([
     "kyc_id",
     "current_step_id",
   ]);
   const { trigger, isMutating } = useKycRequestMutation<
-    StepperStore,
-    IStepperStoreResponse
+    IKycRequest,
+    IKycResponse
   >(`/kyc_requests`, {
     onSuccess(data) {
+      if (data.error.errors.length > 0) {
+        const errors = data.error.errors.join(", ");
+        toast({
+          title: "Error",
+          description: errors,
+          variant: "destructive"
+        });
+        return;
+      }
       const { id } = data;
       updateSearchParams({ step: 2 });
-      setCookie("kyc_id", id);
-      setCookie("current_step_id", 2);
+      setCookie(KycIdKey, id);
+      setCookie(CurrentStepId, 2);
     },
   });
   return { trigger, isMutating };

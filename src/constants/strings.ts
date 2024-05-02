@@ -5,3 +5,5 @@ export const ClientSecret = process.env.NEXT_PUBLIC_FINTECH_PRIMITIVE_CLIENT_SEC
 export const GrantType = process.env.NEXT_PUBLIC_FINTECH_PRIMITIVE_GRANT_TYPE!;
 export const AccessTokenKey = "access_token";
 export const TenantKey = "tenant";
+export const KycIdKey = "kyc_id";
+export const CurrentStepId = "current_step_id";

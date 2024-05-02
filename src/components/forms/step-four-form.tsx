@@ -18,20 +18,38 @@ import { StepFourFormSchema } from "./schema/step-four-form-schema";
 import useSearchParams from "@/lib/useSearchParams";
 import { useKycRequestPatchMutation } from "@/hooks/useMutations";
 import { useUploadFile } from "@/hooks/useUploadFile";
+import { IKycResponse } from "@/types";
+import { useToast } from "../ui/use-toast";
+import { CurrentStepId } from "@/constants/strings";
 
 const URLs = {
   patch: "/kyc_requests/{kyc_id}",
 };
 
 const useKycPatchRequest = () => {
+  const { toast } = useToast();
   const { updateSearchParams } = useSearchParams();
   const kyc_id = new Cookies().get("kyc_id");
   const url = URLs.patch.replace("{kyc_id}", kyc_id);
-  const { trigger, isMutating } = useKycRequestPatchMutation(url, {
-    onSuccess() {
-      updateSearchParams({ step: 3 });
-    },
-  });
+  const { trigger, isMutating } = useKycRequestPatchMutation<IKycResponse>(
+    url,
+    {
+      onSuccess(data) {
+        if (data.error.errors.length > 0) {
+          const errors = data.error.errors.join(", ");
+          toast({
+            title: "Error",
+            description: errors,
+            variant: "destructive",
+          });
+
+          return;
+        }
+        updateSearchParams({ step: undefined });
+        new Cookies().remove(CurrentStepId);
+      },
+    }
+  );
   return { trigger, isMutating };
 };
 

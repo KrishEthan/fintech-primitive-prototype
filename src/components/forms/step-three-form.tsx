@@ -34,22 +34,38 @@ import { useUploadFile } from "@/hooks/useUploadFile";
 import { Cookies, useCookies } from "react-cookie";
 import { useKycRequestPatchMutation } from "@/hooks/useMutations";
 import useSearchParams from "@/lib/useSearchParams";
+import { IKycResponse } from "@/types";
+import { CurrentStepId, KycIdKey } from "@/constants/strings";
+import { useToast } from "../ui/use-toast";
 
 const URLs = {
   patch: "/kyc_requests/{kyc_id}",
 };
 
 const useKycPatchRequest = () => {
+  const { toast } = useToast();
   const { updateSearchParams } = useSearchParams();
-  const kyc_id = new Cookies().get("kyc_id");
-  const [{ current_step_id }, setCookie] = useCookies(["current_step_id"]);
+  const kyc_id = new Cookies().get(KycIdKey);
+  const [{ current_step_id }, setCookie] = useCookies([CurrentStepId]);
   const url = URLs.patch.replace("{kyc_id}", kyc_id);
-  const { trigger, isMutating } = useKycRequestPatchMutation(url, {
-    onSuccess() {
-      updateSearchParams({ step: 4 });
-      setCookie("current_step_id", 4);
-    },
-  });
+  const { trigger, isMutating } = useKycRequestPatchMutation<IKycResponse>(
+    url,
+    {
+      onSuccess(data) {
+        if (data.error.errors.length > 0) {
+          const errors = data.error.errors.join(", ");
+          toast({
+            title: "Error",
+            description: errors,
+            variant: "destructive"
+          });
+          return;
+        }
+        updateSearchParams({ step: 4 });
+        setCookie(CurrentStepId, 4);
+      },
+    }
+  );
   return { trigger, isMutating };
 };
 
@@ -108,7 +124,7 @@ export default function StepThreeForm() {
       await trigger({
         address: {
           ...payload,
-        }
+        },
       });
     } catch (error) {
       console.error(error);
