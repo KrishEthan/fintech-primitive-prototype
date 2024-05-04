@@ -19,6 +19,8 @@ interface IFetcherParams {
 async function fetcher({ url, init, error }: IFetcherParams) {
   try {
     const accessToken = new Cookies().get(AccessTokenKey);
+
+
     const response = await fetch(url, {
       ...init,
       headers: {
@@ -27,7 +29,6 @@ async function fetcher({ url, init, error }: IFetcherParams) {
         ...init.headers,
       },
     });
-
     let json;
     try {
       json = await response.json();
@@ -92,8 +93,6 @@ export function postKycFetcher(baseURL: string) {
     options?: Readonly<{ arg: ExtraArgs }>
   ) => {
     const isArray = Array.isArray(key);
-    console.log(key);
-    console.log(options?.arg);
     return fetcher({
       url: baseURL + (isArray ? key[0] : key),
       init: {
@@ -128,7 +127,6 @@ export function postFormFetcher(baseURL: string) {
   };
 }
 
-
 export function patchKycFetcher(baseURL: string) {
   return <ExtraArgs>(key: string, options?: Readonly<{ arg: ExtraArgs }>) =>
     fetcher({
@@ -142,4 +140,26 @@ export function patchKycFetcher(baseURL: string) {
       },
       error: "An error occurred while modifying the data.",
     });
+}
+
+export function postInvestorFetcher(baseURL: string) {
+  const tenant = new Cookies().get(TenantKey);
+  return <ExtraArgs>(
+    key: string | [string, Record<string, string>],
+    options?: Readonly<{ arg: ExtraArgs }>
+  ) => {
+    const isArray = Array.isArray(key);
+    return fetcher({
+      url: baseURL + (isArray ? key[0] : key),
+      init: {
+        method: "POST",
+        headers: {
+          "x-tenant-id": tenant,
+          "content-type": "application/json",
+        },
+        body: formatBody(options?.arg, isArray ? key[1] : undefined),
+      },
+      error: "An error occurred while posting the data.",
+    });
+  };
 }

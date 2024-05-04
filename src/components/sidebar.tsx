@@ -10,12 +10,18 @@ export default function Sidebar({ onSidebarItemClick }: ISidebarProps) {
   return (
     <div className="w-64 p-4 space-y-8 border-2 border-slate-100">
       <h1 className="text-xl font-bold">Fintech Primitive</h1>
-      <div className="flex flex-col">
+      <div className="flex flex-col cursor-pointer">
         <p
           className="text-md py-2"
           onClick={() => onSidebarItemClick("/kyc-request")}
         >
           KYC Request
+        </p>
+        <p
+          className="text-md py-2"
+          onClick={() => onSidebarItemClick("/investor-profile")}
+        >
+          Investor Profile
         </p>
       </div>
     </div>

@@ -8,6 +8,7 @@ import {
   patchKycFetcher,
   postAuthFetcher,
   postFormFetcher,
+  postInvestorFetcher,
   postKycFetcher,
 } from "@/lib/fetcher";
 import useSWRMutation, { SWRMutationConfiguration } from "swr/mutation";
@@ -66,6 +67,17 @@ export function useKycRequestPatchMutation<Data>(
   return useMutation<unknown, Data>(
     key,
     patchKycFetcher(FintechPrimitiveUrlV2),
+    config
+  );
+}
+
+export function useInvestorPorfileMutation<ExtraArgs, Data>(
+  key: string,
+  config?: SWRMutationConfiguration<Data, Error, string, ExtraArgs>
+) {
+  return useMutation<ExtraArgs, Data>(
+    key,
+    postInvestorFetcher(FintechPrimitiveUrlV2),
     config
   );
 }

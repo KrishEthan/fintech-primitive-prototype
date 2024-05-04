@@ -1,4 +1,4 @@
-export type Step = "/kyc-request";
+export type Step = "/kyc-request" | "/investor-profile";
 
 export interface IKycRequestError {
   status: number;

@@ -53,7 +53,7 @@ function useKycRequest() {
         toast({
           title: "Error",
           description: errors,
-          variant: "destructive"
+          variant: "destructive",
         });
         return;
       }
@@ -123,7 +123,7 @@ export default function StepOneForm() {
         },
         date_of_birth,
       } as StepperStore;
-      trigger(payload);
+      await trigger(payload);
       setStepperStore(payload);
     } catch (error) {
       console.error(error);
