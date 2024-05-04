@@ -1,6 +1,6 @@
 export type Step = "/kyc-request" | "/investor-profile";
 
-export interface IKycRequestError {
+export interface IErrors {
   status: number;
   message: string;
   errors: string[];
@@ -35,8 +35,30 @@ export interface IKycRequest {
 
 export interface IKycResponse extends IKycRequest {
   id: string;
-  error: IKycRequestError;
+  error: IErrors;
 }
+
+export interface IInvestorProfileRequest {
+  type: string | undefined;
+  tax_status: string | undefined;
+  name: string;
+  date_of_birth: string | undefined;
+  gender: string | undefined;
+  occupation: string | undefined;
+  pan: string;
+  country_of_birth: string;
+  place_of_birth: string;
+  use_default_tax_residences: boolean;
+  source_of_wealth: string | undefined;
+  income_slab: string | undefined;
+  pep_details: string;
+}
+
+export interface IInvestorProfileResponse extends IInvestorProfileRequest {
+  id: string;
+  error: IErrors;
+}
+
 export interface IFileRequest {
   file: File | undefined;
   purpose?: string;

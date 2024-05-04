@@ -30,14 +30,38 @@ import dayjs from "dayjs";
 import { Calendar } from "../ui/calendar";
 import { CalendarIcon } from "lucide-react";
 import { useInvestorPorfileMutation } from "@/hooks/useMutations";
+import { useToast } from "../ui/use-toast";
+import { IInvestorProfileRequest, IInvestorProfileResponse } from "@/types";
 
 const URLs = {
   post: "/investor_profiles",
 };
 
 export default function StepInvestorOneForm() {
+  const { toast } = useToast();
+
   const [date, setDate] = useState<Date | undefined>(new Date());
-  const { trigger, isMutating } = useInvestorPorfileMutation(URLs.post);
+
+  const { trigger, isMutating } = useInvestorPorfileMutation<
+    IInvestorProfileRequest,
+    IInvestorProfileResponse
+  >(URLs.post, {
+    onSuccess(data) {
+      if (data.error.errors.length > 0) {
+        const errors = data.error.errors.join(", ");
+        toast({
+          title: "Error",
+          description: errors,
+          variant: "destructive",
+        });
+        return;
+      }
+      toast({
+        title: "Success",
+        description: "Investor Profile created successfully",
+      });
+    },
+  });
 
   const form = useForm<z.infer<typeof StepInvestorOneFormSchema>>({
     resolver: zodResolver(StepInvestorOneFormSchema),
