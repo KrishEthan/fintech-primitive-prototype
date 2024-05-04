@@ -3,7 +3,7 @@ import { Input } from "../ui/input";
 import { Button } from "../ui/button";
 import { useKycRequestMutation } from "@/hooks/useMutations";
 import { Cookies } from "react-cookie";
-import { IKycRequestError } from "@/types";
+import { IErrors } from "@/types";
 import { useToast } from "../ui/use-toast";
 import { CurrentStepId, KycIdKey } from "@/constants/strings";
 import useSearchParams from "@/lib/useSearchParams";
@@ -22,7 +22,7 @@ interface IEsignRequest {
 interface IEsignResponse {
   id: string;
   redirect_url: string;
-  error: IKycRequestError;
+  error: IErrors;
 }
 
 const useKycPostBackURL = () => {
